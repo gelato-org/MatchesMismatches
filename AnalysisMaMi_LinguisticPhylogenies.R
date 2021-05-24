@@ -787,5 +787,5 @@ dev.off()
 
 
 
-## open the trees in http://phylo.io/index.html# , make comparison tree, adjust manually, save and refine in Illustrator
+## open the trees in http://phylo.io/index.html# , make comparison tree, adjust manually, save and refine in graphic software
 
