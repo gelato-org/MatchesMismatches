@@ -346,7 +346,7 @@ BOUCKAERT<-gg+
 #  geom_text(aes(label=popslistemp), size=1)+
   xlab("Time distance from language tree - years ago")+
   ylab("Time distance from genetic data - years ago")+
-  geom_abline(slope=1, intercept = 0, alpha=0.5)+
+  geom_abline(slope=1, intercept = 0, alpha=0.5)+theme_light()+
   ggtitle(meltFstREDBouckaert$FAMILY[1])+theme(plot.title = element_text(color = colorino))
 
 # ggsave("correlationTimeBouckaertIE_noSardiniaMINI.pdf", useDingbats=FALSE, height = 5, width = 5)
@@ -369,7 +369,7 @@ CHANG<-gg+
   geom_text(aes(label=popslistemp), size=1)+
   xlab("Time distance from language tree - years ago")+
   ylab("Time distance from genetic data - years ago")+
-  geom_abline(slope=1, intercept = 0, alpha=0.5)+
+  geom_abline(slope=1, intercept = 0, alpha=0.5)+theme_light()+
   ggtitle(meltFstREDChang$FAMILY[1])+theme(plot.title = element_text(color = colorino))
 
 # ggsave("correlationTimeChangIE_MINI.pdf", useDingbats=FALSE, height = 5, width = 5)
@@ -399,7 +399,7 @@ HRUS<-gg+
  # geom_text(aes(label=popslistemp), size=1)+
   xlab("Time distance from language tree - years ago")+
   ylab("Time distance from genetic data - years ago")+
-  geom_abline(slope=1, intercept = 0, alpha=0.5)+
+  geom_abline(slope=1, intercept = 0, alpha=0.5)+ theme_light()+
   ggtitle(meltFstREDHrushka$FAMILY[1])+theme(plot.title = element_text(color = colorino))
 
 #******************************************
@@ -424,6 +424,7 @@ SAVAL<-gg+
   xlab("Time distance from language tree - years ago")+
   ylab("Time distance from genetic data - years ago")+
   geom_abline(slope=1, intercept = 0, alpha=0.5)+
+  theme_light()+
   ggtitle(TARGETFamily)+theme(plot.title = element_text(color = colorino))
 
 ####
@@ -457,7 +458,7 @@ AUSTR<-gg+
   # geom_text(aes(label=popslistemp), size=1)+
   xlab("Time distance from language tree - years ago")+
   ylab("Time distance from genetic data - years ago")+
-  geom_abline(slope=1, intercept = 0, alpha=0.5)+
+  geom_abline(slope=1, intercept = 0, alpha=0.5)+theme_light()+
   ggtitle(meltFstREDGray2009$FAMILY[1])+theme(plot.title = element_text(color = colorino))
 
 # ggsave("correlationTimeGray2009_Austronesian_noOutlierMamanwa_RennellBelloneMINI.pdf", useDingbats=FALSE, height = 5, width = 5)
@@ -471,7 +472,7 @@ AUSTR<-gg+
 #*****************************************************
 #*
 library(ggpubr)
-ggarrange(BOUCKAERT, HRUS, AUSTR + rremove("x.text"), 
+ggarrange(BOUCKAERT, AUSTR, HRUS  + rremove("x.text"), 
           labels = c("A", "B", "C"),
           ncol = 3, nrow = 1)
 ggsave("combined3LangFamiliesCorrelation_Fig4_2021.pdf", useDingbats=FALSE, height = 4, width = 12)
@@ -750,26 +751,25 @@ phy1$edge.length[phy1$edge.length < 0] = 0.002
 write.tree(phy1,paste0(TARGETFamily, "_FST.tree"))
 write.tree(phy2,paste0(TARGETFamily, "_lang.tree"))
 
-pdf(paste0(TARGETFamily,"FSTtree_2021.pdf"),width=5, height=7,useDingbats=FALSE)
-plot.phylo(phy1,align.tip.label = TRUE,cex=0.4)
-axisPhylo(side = 1)
-dev.off()
+pdf(paste0(TARGETFamily,"treesComparison_2021.pdf"),width=12, height=12,useDingbats=FALSE)
 
-pdf(paste0(TARGETFamily,"Langtree_2021.pdf"),width=5, height=7,useDingbats=FALSE)
+#par(mfrow=c(1,3))
+layout(matrix(c(1,1,2,3), 2, 2, byrow = TRUE))
+# cophilo comparison
+plot(cophylo(phy2,phy1,rotate=T), fsize=0.6)
+
+# lang tree
+#pdf(paste0(TARGETFamily,"Langtree_2021.pdf"),width=5, height=7,useDingbats=FALSE)
 plot.phylo(phy2,align.tip.label = TRUE, cex=0.5)
-axisPhylo(side = 1)
-dev.off()
+axisPhylo(side = 3)
+#dev.off()
 
-## convert phylo objects to dendrograms
-dnd1 <- as.dendrogram(phy1)
-dnd2 <- as.dendrogram(phy2)
-## rearrange in ladderized fashion
-dnd1 <- ladder(dnd1) # gene FST
-dnd2 <- ladder(dnd2) # language
-## plot the tanglegram
-pdf(paste0(TARGETFamily,"TangleGram.pdf"),width=15, height=7,useDingbats=FALSE)
-dndlist <- dendextend::dendlist(dnd2, dnd1)
-dendextend::tanglegram(dndlist, fast = TRUE, margin_inner = 5)
+# FST tree
+#pdf(paste0(TARGETFamily,"FSTtree_2021.pdf"),width=5, height=7,useDingbats=FALSE)
+plot.phylo(phy1,align.tip.label = TRUE,cex=0.4)
+axisPhylo(side = 3)
+#dev.off()
+
 dev.off()
 
 ### QUARTET measurements
@@ -779,13 +779,25 @@ SimilarityMetrics(statuses, similarity = TRUE)
 ncol(AllQuartets(Ntip(phy2)))
 
 pdf(paste0(TARGETFamily,"Quartet.pdf"),useDingbats=FALSE, height = 10, width = 10)
-VisualizeQuartets(phy2, phy1)
-dev.off()
+VisualizeQuartets(phy2, phy1, scale=0.6)
+dev.off() # i cannot group the quartet plots in a single figure!
+
+### compare phylogenies with Phytools
+
+#  TARGETFamily<-ThreeFamilies[k]
+#  phy1<-read.tree(paste0(TARGETFamily, "_FST.tree"))
+#  phy2<-read.tree(paste0(TARGETFamily, "_lang.tree"))
+  
+  # plot compared phylogenies
+  pdf(paste0(TARGETFamily,"Cophilo.pdf"),width=15, height=7,useDingbats=FALSE)
+  
+  plot(cophylo(phy2,phy1,rotate=T), fsize=0.6)
+  # nodelabels.cophylo(phy2$node.label)
+  #  nodelabels.cophylo(which="right",phy1$node.label )
+  
+  dev.off()
 
 }
 
 
-
-
-## open the trees in http://phylo.io/index.html# , make comparison tree, adjust manually, save and refine in graphic software
 

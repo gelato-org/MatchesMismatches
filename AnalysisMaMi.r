@@ -246,6 +246,7 @@ Fig1A<-ggplot(plotproportion,aes(x=as.numeric(percentiles), y=percentageMismatch
   #geom_vline(xintercept = 0.2, color="darkorange", size=1)+
   scale_colour_gradient2(midpoint=0.2, low="darkred", mid="darkorange",
                          high="white", name="")+
+  theme_light() +
   theme(legend.position = "none", text=element_text(size=5))
 
 Fig1A
@@ -255,8 +256,6 @@ ggsave("ProportionaMismatchesSensitivityThresholdFST_2021_better.pdf", useDingba
 
 ### single populations involved in a mismatch, starting with which percentile
 perpopRED$percentileMismatch<-NA
-perpopREDold<-perpopRED
-singlepopinmismatchold<-singlepopinmismatch
 singlepopinmismatch<-c()
 
 for (i in length(percentiles):1){
@@ -432,7 +431,6 @@ for (i in 1:nrow(perpopRED)){
 }
 
 
-boxplot(Fst ~ SameFamily, data=meltini)
 
 > length(which(perpopRED$WtestPvalueGEOfilter<0.01))
 [1] 212
@@ -450,7 +448,7 @@ length(which(!is.na(perpopRED$WtestPvalueGEOfilter)))
 #******************************************
 ## figure distribution and Wilcox test for each Major Language Family
 ##supplementary
-meltinitonyold<-meltinitony
+
 meltinitony<-c()
 wtest<-c()
 for (i in 1:length(MainFamilies)){
@@ -483,6 +481,7 @@ ggg+ geom_jitter(shape=16, position=position_jitter(0.2), color="gray80", size=0
   scale_fill_gradient( low="darkred",
                        high="cyan", name="max radius comparison in km")+
    # ggtitle( subtitle = paste0("W test  p value:", round(meltinitony$wtestFamily, digits = 4)))+
+  theme_light()+
   facet_wrap(~familytarget,ncol=3,scales = "free_y")
 ggsave("family_plotFST_density_YESorNOGEOfilter_2021.pdf", useDingbats=FALSE, height = 8, width = 8)
 
@@ -514,8 +513,9 @@ for (i in 1:nrow(perpopRED)){
     stat_summary(fun.data="mean_sdl", 
                  geom="pointrange", color="darkmagenta") +
     ggtitle(paste0(TARGET," - ",perpopRED$glottolog.NAME[i]," - ",maxgeofam, "km radius"), 
-            subtitle = paste0("W test: ", round(perpopRED$WtestGEOfilter[i]), ", p value:", round(perpopRED$WtestPvalueGEOfilter[i], digits = 4)))
-  
+            subtitle = paste0("W test: ", round(perpopRED$WtestGEOfilter[i]), ", p value:", round(perpopRED$WtestPvalueGEOfilter[i], digits = 4))) +
+  theme_light()
+    
   print(ggg)
 
 }
@@ -675,7 +675,7 @@ pdf("EACHPOP_FSTGeo_linearModels_2021.pdf")
 
 par(mfrow=c(5,3), mar = c(2, 2, 2, 2))
 
-for (i in 1:nrow(perpopREDGEO)){
+for (i in 1:nrow(perpopREDGEO)){ 
   TARGET<-perpopREDGEO$PopName[i]
   meltini<-FstListREDinfoGEO[which(FstListREDinfoGEO$Pop1==TARGET),]
   meltiniRED<-meltini[which(meltini$FstLinear<=max(meltini$FstLinear[which(meltini$SameFamily=="YES")])*2),]   #cut the Fst larger than TWICE the max Fst within Family, but also outlier FST >0.1
@@ -715,13 +715,13 @@ dev.off()
 # calculate Mismatch Indicator variables for each family
 #### Figure 2 panel below
 #************************************************************
-
+library(reshape)
 size<-as.numeric(table(perpopREDfamily$MainFamilies))
 
 perLANGminiplot<-perpopREDfamily[,c("MainFamilies", "percentileMismatch","WtestPvalueGEOfilter","ratioresidualsWithin" )]
 
 MELTperLANGminiplot<-melt(perLANGminiplot)
-
+levels(MELTperLANGminiplot$variable)<-c("MI1_GeneticallyClose", "MI2_FSTdistributions", "MI3b_GeographicNeighborsIBD")
 
 ga<-ggplot(MELTperLANGminiplot,aes(x=MainFamilies,y=value, color=MainFamilies))
 ga+ 
@@ -730,6 +730,7 @@ ga+
   geom_boxplot(color="gray20", alpha=0.7, outlier.shape = NA)+
   geom_jitter(shape=16, position=position_jitter(0.2))+
   scale_color_manual(values = colorchoice)+
+  theme_light()+
   theme(axis.text.x = element_text(angle = 45, vjust=1, hjust=1),legend.position = "none") +  
   facet_wrap(~variable,ncol=1, scales = "free_y")
 
@@ -870,6 +871,7 @@ ga+ geom_jitter(shape=16, position=position_jitter(0.2))+
   geom_violin(trim=FALSE, alpha=0.4)+
   stat_summary(fun.data="mean_sdl", mult=1, 
                geom="pointrange", color="orange")+
+  theme_light()+
   ylim(0,150)+xlab("Geographic radius in km")+ylab("number of populations from a different language family")
 
 ggsave("Suppl_DensityDistributionMismatches_vsGeoDistanceThresholds_2021.pdf", useDingbats=FALSE, height = 4, width = 6, units = "in")
@@ -998,7 +1000,7 @@ mismatch3a<-perpopRED[grep("MISMATCH",perpopRED$Mismatch3a),]
 perpopRED$DIFFFamilyClosestFAM<-perpopRED$glottolog.NAME[match(perpopRED$DIFFFamilyClosestpop,perpopRED$PopName)]
 colnameschoice<-c("PopName","glottolog.NAME", "geodistSameFamily","geodistDIFFFamily","DIFFFamilyClosestpop", "DIFFFamilyClosestFAM")
 mismatch3a<-mismatch3a[,colnameschoice]
-write.table(mismatch3a[order(mismatch3a$geodistDIFFFamily),],"tableSupplMismatches3a.txt", sep="\t", row.names = F, quote=F) 
+#write.table(mismatch3a[order(mismatch3a$geodistDIFFFamily),],"tableSupplMismatches3a.txt", sep="\t", row.names = F, quote=F) 
 
 #**************************************************
 ### lollipop proportion 3a
@@ -1013,6 +1015,7 @@ gi<-ggplot(proportion3aMELT, aes(Family, proportion))
 gi+ geom_segment( aes(x=Family, xend=Family, y=0, yend=proportion))+
   geom_point(aes(color=Family), size=5)+
 scale_color_manual(values = colorchoice)+
+  theme_light()+
   theme(axis.text.x = element_text(angle = 45, vjust=1, hjust=1)) +
   facet_wrap(~variable,ncol=1)
 ggsave("lollipop_3a.pdf", useDingbats=FALSE, width = 8, height = 5)
@@ -1033,6 +1036,7 @@ gg<-ggplot(perpopRED)
 
 gg<-ggplot(perpopRED) + geom_point(aes(proportionHeterozyAdjustedNeighbors,proportionFstAdjustedNeighbors), alpha=0.3)+
   geom_point(data=perpopREDISOLATE,aes(proportionHeterozyAdjustedNeighbors,proportionFstAdjustedNeighbors), color="red" )+
+  theme_light()+
   geom_text_repel(data=perpopREDISOLATE,aes(proportionHeterozyAdjustedNeighbors,proportionFstAdjustedNeighbors, color=isolate, label=PopName), color="red" )+
  xlab("proportion of heterozygozity compared to neighbors")+ylab("proportion of median FST compared to neighbors")
  
@@ -1044,6 +1048,7 @@ ga<-ggplot(perpopRED,aes(x=isolate,y=proportionFstAdjustedNeighbors))+
   geom_violin(trim=FALSE, alpha=0.4)+
   stat_summary(fun.data="mean_sdl", mult=1, 
                geom="pointrange", color="orange")+
+  theme_light()+
   xlab("")+ylab("proportion of median FST")
 #ggsave("LangIsolate_violinpoportionFST_2021.pdf", useDingbats=FALSE, height = 4, width = 6, units = "in")
 
@@ -1255,6 +1260,7 @@ BASQUE<- agg+ geom_label_repel( aes(GEOdist,FstLinear, color=family2,label=Pop2)
   geom_point(aes(GEOdist,FstLinear, color=family2))+
   ggtitle("Basque")+
   scale_color_manual(values = colorispecial)+
+  theme_light()+
   labs(colour="Language Family")
 
 #***************************************************
@@ -1274,7 +1280,7 @@ agg<-ggplot(selectionMalta)
 
 MALTA<- agg+ geom_label_repel( aes(GEOdist,FstLinear, color=family2,label=Pop2), size=3, label.padding=0.1)+
   geom_point(aes(GEOdist,FstLinear, color=family2))+
-  ggtitle("Maltese")+
+  ggtitle("Maltese")+  theme_light()+
   scale_color_manual(values = colorispecial)+
   labs(colour="Language Family")
 
@@ -1294,7 +1300,7 @@ agg<-ggplot(selectionSAND)
 
 SANDAWE<- agg+ geom_label_repel( aes(GEOdist,FstLinear, color=family2,label=Pop2), size=3, label.padding=0.1)+
   geom_point(aes(GEOdist,FstLinear, color=family2))+
-  ylim(0.01,0.06)+
+  ylim(0.01,0.06)+  theme_light()+
   ggtitle("Sandawe")+
   scale_color_manual(values = colorispecial)+
   labs(colour="Language Family")
@@ -1312,8 +1318,8 @@ colorispecial[ is.na(colorispecial)]<-c( "gray40","gray10","gray60","gray80", "g
 agg<-ggplot(selectionHadz)
 HADZA<- agg+ geom_label_repel( aes(GEOdist,FstLinear, color=family2,label=Pop2), size=3, label.padding=0.1)+
   geom_point(aes(GEOdist,FstLinear, color=family2))+
-  ggtitle("Hadza")+
-  scale_color_manual(values = colorispecial)+
+  ggtitle("Hadza")+ 
+  scale_color_manual(values = colorispecial)+ theme_light()+
   labs(colour="Language Family")
 
 #***************************************************
@@ -1333,7 +1339,7 @@ agg<-ggplot(selectionarmenian)
 ARMENIAN<- agg+ geom_label_repel( aes(GEOdist,FstLinear, color=family2,label=Pop2), size=3, label.padding=0.1)+
   geom_point(aes(GEOdist,FstLinear, color=family2))+
   ggtitle("Armenian")+
-  scale_color_manual(values = colorispecial)+
+  scale_color_manual(values = colorispecial)+ theme_light()+
   labs(colour="Language Family")
 
 #***************************************************
@@ -1353,7 +1359,7 @@ agg<-ggplot(selectionazerb)
 AZERBAJAN<- agg+ geom_label_repel( aes(GEOdist,FstLinear, color=family2,label=Pop2), size=3, label.padding=0.1)+
   geom_point(aes(GEOdist,FstLinear, color=family2))+
   ggtitle("Azeri_Azerbajan")+
-  scale_color_manual(values = colorispecial)+
+  scale_color_manual(values = colorispecial)+ theme_light()+
   labs(colour="Language Family")
 
 #***************************************************
