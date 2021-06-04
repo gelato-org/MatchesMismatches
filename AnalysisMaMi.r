@@ -8,21 +8,22 @@
 #*
 #*
 
-write.table(FstListREDinfo, "/Users/chiarabarbieri/Library/Mobile Documents/com~apple~CloudDocs/GeLaTo/FstListREDinfo2021.txt", sep="\t", row.names = F, quote=F) 
+#write.table(FstListREDinfo, "/Users/chiarabarbieri/Library/Mobile Documents/com~apple~CloudDocs/GeLaTo/FstListREDinfo2021.txt", sep="\t", row.names = F, quote=F) 
 
-write.table(perpopRED, "/Users/chiarabarbieri/Library/Mobile Documents/com~apple~CloudDocs/GeLaTo/perpopREDMaMi2021.txt", row.names = F,  sep = "\t", quote = F)
+#write.table(perpopRED, "/Users/chiarabarbieri/Library/Mobile Documents/com~apple~CloudDocs/GeLaTo/perpopREDMaMi2021.txt", row.names = F,  sep = "\t", quote = F)
 
 
-source("/Users/chiarabarbieri/Library/Mobile Documents/com~apple~CloudDocs/ggworld.R")
+#source("/Users/chiarabarbieri/Library/Mobile Documents/com~apple~CloudDocs/ggworld.R")
 
-# in Zurich
-setwd("/Users/chiarabarbieri/switchdrive/GeLaTo")
+# setwd("/Users/chiarabarbieri/switchdrive/GeLaTo")
+
+### read the two main files
+# list of 404 populations :
 perpopRED<-read.table("/Users/chiarabarbieri/Library/Mobile Documents/com~apple~CloudDocs/GeLaTo/perpopREDMaMi2021.txt",   sep = "\t", header=T, as.is=T)
-#meltFstREDinfo<-read.table("/Users/chiarabarbieri/Library/Mobile Documents/com~apple~CloudDocs/GeLaTo/meltFst_total5inPopswithINFO_double_checked.txt",header = T, as.is=T, sep="\t")
+# list of pairwise comparisons :
 FstListREDinfo<-read.table("/Users/chiarabarbieri/Library/Mobile Documents/com~apple~CloudDocs/GeLaTo/FstListREDinfo2021.txt",header = T, as.is=T, sep="\t")
-FstListREDinfo<-meltFstREDinfo
 
-# color for major language families
+# color palette for major language families
 
 Lfamil<-table(perpopRED$glottolog.NAME)
 MainFamilies<-unlist(labels(Lfamil[which(Lfamil>4)])) # minimum 5 populations per Lang Family
@@ -39,6 +40,8 @@ library(ggplot2)
 
 #******************************************
 ### MAP
+#******************************************
+
 library(maps)
 library('maps')
 library('geosphere')
@@ -50,11 +53,14 @@ perpopRED$lat<-as.numeric(perpopRED$lat)
 perpopRED$lon<-as.numeric(perpopRED$lon)
 
 
-perpopRED2<-perpopRED[!is.na(perpopRED$lat),]
-perpopREDSHIFTMAP<-MoveDataCoord(perpopRED2)
+perpopRED2<-perpopRED[!is.na(perpopRED$lat),] # exclude populations for which i do not have geographic coordinates
+perpopREDSHIFTMAP<-MoveDataCoord(perpopRED2)   # perform coordinate shift to plot Pacific centered maps
 
-## map language families
-#### MAP WITH MAJOR LANGUAGE FAMILIES AND COLOR CODE,  FIGURE 2a
+## map population location and language families
+#### MAP WITH MAJOR LANGUAGE FAMILIES ASSIGNED TO COLOR CODE,  
+# FIGURE 1a
+#******************************************
+#*
 
 base_plot + geom_point(data = perpopREDSHIFTMAP,
                        aes(x = lon.1, y = lat.1), 
@@ -73,7 +79,7 @@ ggsave("WholeGelatoMap_Pacific_LittleCrossesMajorFamilies.pdf", useDingbats=FALS
 #******************************************
 # ANALYSIS PERCENTILES
 #******************************************
-# MISMATCH INDICATOR 1
+# OVERVIEW OF MISMATCHES WITH CLOSE FST DISTANCES
 #******************************************
 #******************************************
 
@@ -137,7 +143,7 @@ for (i in 1:nrow(FstListREDinfo)){
   }
 }
 
-# prepare plottable file
+# prepare plottable file for pairwise connections
 
 betweenfamilSMALLgeoplottabile1<-FstListREDinfo
 betweenfamilSMALLgeoplottabile1$index<-c(1:nrow(FstListREDinfo))
@@ -162,7 +168,7 @@ betweenfamilSMALLgeoplottabileSHIFTMAP<-MoveDataCoord(betweenfamilSMALLgeoplotta
 
 betweenfamilSMALLgeoplottabileSHIFTMAP2<-betweenfamilSMALLgeoplottabileSHIFTMAP[which(betweenfamilSMALLgeoplottabileSHIFTMAP$percentileFST<0.1),]
 
-Fig1b<-base_plot + geom_point(data = perpopREDSHIFTMAP,
+base_plot + geom_point(data = perpopREDSHIFTMAP,
                               aes(x = lon.1, y = lat.1),
                               color = "black",
                               size = 0.5, shape=3)+
@@ -175,13 +181,16 @@ Fig1b<-base_plot + geom_point(data = perpopREDSHIFTMAP,
   #ggtitle("weight of mismatches according to FST percentile distribution")+
   xlab("") + ylab("") +
   guides(alpha=FALSE, size=FALSE)
-Fig1b
+
+
+### now in Supplementary!!!
 ggsave("MapPairMismatchesPercentileDistribution_until10percentile_2021.pdf", useDingbats=FALSE, width = 15, height = 8, dpi = 300, units = "in")
 
 
 
 ##-------------------------------------
 # figure 1 area proportion of linguistically unrelated in close FSTs
+# now supplementary
 ##-------------------------------------
 
 
@@ -237,7 +246,7 @@ plot(FstListREDinfo$percentileFSTdoublecheck, FstListREDinfo$percentileFST) # ch
 plotproportion<-data.frame(percentiles,nrow(FstListREDinfo)-numberTotalSmallFST,numberTotalSmallFST-numberTotalSmallFSTDIVERSE,numberTotalSmallFSTDIVERSE)
 colnames(plotproportion)<-c("percentiles","pairsOutside","pairsInsideSameFamily","pairsInsideDiffFamily")
 
-Fig1A<-ggplot(plotproportion,aes(x=as.numeric(percentiles), y=percentageMismatchesinTotalSmallFST, color=as.numeric(percentiles)))+
+ggplot(plotproportion,aes(x=as.numeric(percentiles), y=percentageMismatchesinTotalSmallFST, color=as.numeric(percentiles)))+
   geom_segment(aes(xend=as.numeric(percentiles), yend=0, color=as.numeric(percentiles)), alpha=0.9)+
   geom_line(size=1)+
   # geom_area(aes(x=as.numeric(percentiles), y=percentageMismatchesinTotalSmallFST), alpha=0.5, fill="darkorange", color="darkorange")+
@@ -249,12 +258,11 @@ Fig1A<-ggplot(plotproportion,aes(x=as.numeric(percentiles), y=percentageMismatch
   theme_light() +
   theme(legend.position = "none", text=element_text(size=5))
 
-Fig1A
 ggsave("ProportionaMismatchesSensitivityThresholdFST_2021_better.pdf", useDingbats=FALSE, width = 4, height = 2)
 
 
 
-### single populations involved in a mismatch, starting with which percentile
+### for each population, i annotate the percentile FST threshold in which they appear in a mismatch pair
 perpopRED$percentileMismatch<-NA
 singlepopinmismatch<-c()
 
@@ -363,6 +371,116 @@ dev.off()
 
 
 
+#******************************************
+  #*#******************************************
+  #*   genetic and linguistic enclaves
+  #*#******************************************
+  
+  # ***************************************************
+  # evaluate the incidence of neighbors from the SAME AND THE different L famiy for each population
+  # closer neighbor from same and different L family
+  
+  perpopRED$hasOtherMatches<-"YES"  
+perpopRED$closeFstSameFamily<-NA  
+perpopRED$geodistSameFamily<-NA  
+perpopRED$closeFstDIFFFamily<-NA  
+perpopRED$geodistDIFFFamily<-NA  
+perpopRED$DIFFFamilyClosestpop<-NA
+perpopRED$SameFamilyMostDistantClosestFst<-NA
+
+
+# how far the same family is gen closer than other families?
+
+
+for (i in 1:nrow(perpopRED)){
+  targetpop<-perpopRED$PopName[i]
+  temp<-FstListREDinfo[which(FstListREDinfo$Pop1==targetpop),]
+  
+  samefamily<-temp[which(temp$FAMILY!="DIVERSE"),]
+  escludiniVicini<-which(samefamily$GEOdist<10&samefamily$glottocodeBase1==samefamily$glottocodeBase2)
+  if(length(escludiniVicini)!=0){
+    samefamily<-samefamily[-escludiniVicini,] # exclude when there is a neighbor too close (LESS THAN 10 KM) from same exact language as DUPLICATED SAMPLE
+  } 
+  if(nrow(samefamily)==0){
+    perpopRED$hasOtherMatches[i]<-"NO" 
+  }
+  else{
+    perpopRED$closeFstSameFamily[i]<-sort(samefamily$Fst)[1]  # the closest Fst
+    perpopRED$geodistSameFamily[i]<-samefamily$GEOdist[order(samefamily$Fst)][1]    # the geographic distance from the closest Fst
+  }
+  DIFFfamily<-temp[which(temp$FAMILY=="DIVERSE"),]
+  perpopRED$closeFstDIFFFamily[i]<-sort(DIFFfamily$Fst)[1]  # the closest Fst from a different language family
+  perpopRED$geodistDIFFFamily[i]<-DIFFfamily$GEOdist[order(DIFFfamily$Fst)][1]    # the geographic distance from the closest Fst of a different language family
+  perpopRED$DIFFFamilyClosestpop[i]<-DIFFfamily[order(DIFFfamily$Fst),][1,]$Pop2  # the pop which closest fst in mismatch
+  
+  if(length(which(sort(samefamily$Fst)<perpopRED$closeFstDIFFFamily[i]))==0){
+    perpopRED$SameFamilyMostDistantClosestFst[i]<-"NONE"    }
+  else{
+    perpopRED$SameFamilyMostDistantClosestFst[i]<-tail(samefamily$GEOdist[which(sort(samefamily$Fst)<perpopRED$closeFstDIFFFamily[i])],1) # the geographic distance from the closest Fst of the same language family that is less than the closest fst from diff L family
+  }
+}
+
+
+perpopRED$proportionFST_diff_sameFamily<- perpopRED$closeFstDIFFFamily/perpopRED$closeFstSameFamily 
+perpopRED$proportionGeoDistSameDiffFamily<- perpopRED$geodistDIFFFamily/perpopRED$geodistSameFamily 
+perpopRED$Mismatch3a<-NA
+#perpopRED$Mismatchsingular2[which(perpopRED$closeFstSameFamil==0&perpopRED$geodistSameFamily>100&perpopRED$closeFstDIFFFamily!=0)] <- "secondaryMATCH_FSTzero_geodist100"
+perpopRED$Mismatch3a[which(perpopRED$closeFstDIFFFamily==0&perpopRED$closeFstSameFamil!=0)] <- "secondaryMISMATCH_FSTzeroDiffFamily"
+
+perpopRED$Mismatch3a[which(perpopRED$proportionFST_diff_sameFamily<1&perpopRED$proportionGeoDistSameDiffFamily>1)] <- "MISMATCH"
+perpopRED$Mismatch3a[which(perpopRED$proportionFST_diff_sameFamily>1&perpopRED$proportionGeoDistSameDiffFamily<1)] <- "MATCH"
+
+perpopRED$Mismatch3a[which(perpopRED$hasOtherMatches!="YES"  )]<-"ZeroSameFamilyNeighbors"
+
+table(perpopRED$Mismatch3a)/nrow(perpopRED)
+
+### tabl
+
+#*** 2021 
+
+MATCH                            MISMATCH 
+0.128712871                         0.069306931 
+secondaryMISMATCH_FSTzeroDiffFamily             ZeroSameFamilyNeighbors 
+0.004950495                         0.049504950 
+#***
+
+#*#******************************************
+#*
+#* potential FIGURE 1 different distribution FST closest same family and different family
+#* 
+
+aa<-perpopRED[,c(1,39,41,16)] 
+meltperpop<-melt(aa)
+
+colorchoice2<-colorchoice
+colorchoice2[10]<-"gray20"
+colorchoice2[11:16]<-colorchoice[10:15]
+
+ga<-ggplot(meltperpop, aes(variable,value , color=MainFamilies))
+ga+ 
+  #geom_violin(trim=FALSE, alpha=0.4)+
+  #  stat_summary(fun.data="mean_sdl", mult=1, geom="pointrange", color="gray20", alpha=0.5)+
+  geom_boxplot(color="gray20", alpha=0.7, outlier.shape = NA)+
+  geom_jitter(shape=16, position=position_jitter(0.2))+
+  scale_color_manual(values = colorchoice2)+
+  theme_light()
+ggsave("distributCloseFSTsameFamDiffFam.pdf", useDingbats=FALSE, height = 5, width = 4)
+
+#*#******************************************
+#* 
+#* 
+#* 
+
+
+### 
+#*#******************************************
+#*  #*#******************************************
+#*  now the bulk of the analysis with the Mismatch Indicators
+#*    #*#******************************************
+#*    #*#******************************************
+#*    
+#*    
+
 
 ## exclude neighbors who speak the same language as DUPLICATE POPS
 escludiniVicini<-FstListREDinfo[which(FstListREDinfo$GEOdist<10&FstListREDinfo$glottocodeBase1==FstListREDinfo$glottocodeBase2),]
@@ -396,7 +514,8 @@ FstListREDinfo_noDuplicateNeighbors<-FstListREDinfo[-which(FstListREDinfo$GEOdis
 #*#******************************************
 #*#******************************************
 #*    WILCOXON TEST
-# Mismatch Indicator 2
+# Mismatch Indicator 1
+#* FST distribution between and within language families
 #*#******************************************
 #*#******************************************
 #*
@@ -527,80 +646,7 @@ dev.off()
 #*#******************************************
 #*#******************************************
 #*#******************************************
-#*#******************************************
-#*#******************************************
-#*    Mismatch Indicator 3a
-#*#******************************************
-
-# ***************************************************
-# evaluate the incidence of neighbors from the SAME AND THE different L famiy for each population
-
-
-# closer neighbor from same L family
-perpopRED$hasOtherMatches<-"YES"  
-perpopRED$closeFstSameFamily<-NA  
-perpopRED$geodistSameFamily<-NA  
-perpopRED$closeFstDIFFFamily<-NA  
-perpopRED$geodistDIFFFamily<-NA  
-perpopRED$DIFFFamilyClosestpop<-NA
-perpopRED$SameFamilyMostDistantClosestFst<-NA
-
-
-# how far the same family is gen closer than other families?
-
-
-for (i in 1:nrow(perpopRED)){
-  targetpop<-perpopRED$PopName[i]
-  temp<-FstListREDinfo[which(FstListREDinfo$Pop1==targetpop),]
- 
-   samefamily<-temp[which(temp$FAMILY!="DIVERSE"),]
-  escludiniVicini<-which(samefamily$GEOdist<10&samefamily$glottocodeBase1==samefamily$glottocodeBase2)
-  if(length(escludiniVicini)!=0){
-    samefamily<-samefamily[-escludiniVicini,] # exclude when there is a neighbor too close (LESS THAN 10 KM) from same exact language as DUPLICATED SAMPLE
-  } 
-  if(nrow(samefamily)==0){
-    perpopRED$hasOtherMatches[i]<-"NO" 
-  }
-  else{
-    perpopRED$closeFstSameFamily[i]<-sort(samefamily$Fst)[1]  # the closest Fst
-    perpopRED$geodistSameFamily[i]<-samefamily$GEOdist[order(samefamily$Fst)][1]    # the geographic distance from the closest Fst
-  }
-  DIFFfamily<-temp[which(temp$FAMILY=="DIVERSE"),]
-  perpopRED$closeFstDIFFFamily[i]<-sort(DIFFfamily$Fst)[1]  # the closest Fst from a different language family
-  perpopRED$geodistDIFFFamily[i]<-DIFFfamily$GEOdist[order(DIFFfamily$Fst)][1]    # the geographic distance from the closest Fst of a different language family
-  perpopRED$DIFFFamilyClosestpop[i]<-DIFFfamily[order(DIFFfamily$Fst),][1,]$Pop2  # the pop which closest fst in mismatch
-  
-  if(length(which(sort(samefamily$Fst)<perpopRED$closeFstDIFFFamily[i]))==0){
-    perpopRED$SameFamilyMostDistantClosestFst[i]<-"NONE"    }
-  else{
-    perpopRED$SameFamilyMostDistantClosestFst[i]<-tail(samefamily$GEOdist[which(sort(samefamily$Fst)<perpopRED$closeFstDIFFFamily[i])],1) # the geographic distance from the closest Fst of the same language family that is less than the closest fst from diff L family
-  }
-}
-
-
-perpopRED$proportionFST_diff_sameFamily<- perpopRED$closeFstDIFFFamily/perpopRED$closeFstSameFamily 
-perpopRED$proportionGeoDistSameDiffFamily<- perpopRED$geodistDIFFFamily/perpopRED$geodistSameFamily 
-perpopRED$Mismatch3a<-NA
-#perpopRED$Mismatchsingular2[which(perpopRED$closeFstSameFamil==0&perpopRED$geodistSameFamily>100&perpopRED$closeFstDIFFFamily!=0)] <- "secondaryMATCH_FSTzero_geodist100"
-perpopRED$Mismatch3a[which(perpopRED$closeFstDIFFFamily==0&perpopRED$closeFstSameFamil!=0)] <- "secondaryMISMATCH_FSTzeroDiffFamily"
-
-perpopRED$Mismatch3a[which(perpopRED$proportionFST_diff_sameFamily<1&perpopRED$proportionGeoDistSameDiffFamily>1)] <- "MISMATCH"
-perpopRED$Mismatch3a[which(perpopRED$proportionFST_diff_sameFamily>1&perpopRED$proportionGeoDistSameDiffFamily<1)] <- "MATCH"
-
-perpopRED$Mismatch3a[which(perpopRED$hasOtherMatches!="YES"  )]<-"ZeroSameFamilyNeighbors"
-
-table(perpopRED$Mismatch3a)/nrow(perpopRED)
-
-### tabl
-
-#*** 2021 
-
-MATCH                            MISMATCH 
-0.128712871                         0.069306931 
-secondaryMISMATCH_FSTzeroDiffFamily             ZeroSameFamilyNeighbors 
-0.004950495                         0.049504950 
-#***
-
+#
 
 
 ######################################################################
@@ -969,7 +1015,7 @@ ggsave("MapWilcoxonTest_2021_.pdf", useDingbats=FALSE, width = 15, height = 8, d
 
 ########
 ## the map with singular mismatches of linguistic and genetic migrants - Mismatch Indicator 3a
-# Figure S10
+# Figure 1 potential
 ########
 library(ggrepel)
 
