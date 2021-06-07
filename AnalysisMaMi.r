@@ -444,6 +444,25 @@ secondaryMISMATCH_FSTzeroDiffFamily             ZeroSameFamilyNeighbors
 0.004950495                         0.049504950 
 #***
 
+
+## genetic and linguistic enclaves to exclude from further analysis
+
+ListEnclaves<-perpopRED$PopName [which(perpopRED$Mismatch3a%in%c("MISMATCH","secondaryMISMATCH_FSTzeroDiffFamily"))]
+
+> ListEnclaves
+[1] "Yoruba"            "Mengen"            "Bengali"           "Hazara"           
+[5] "Kharia"            "Gui"               "Khwe"              "Nama"             
+[9] "Mongola"           "Avar_Gunibsky"     "Aleut"             "Dai"              
+[13] "Jew_Georgian"      "Khomani"           "Spanish_PaisVasco" "Yaquis"           
+[17] "Yukagir_Forest"    "Yukagir_Tundra"    "Zapotec"           "Wayku"            
+[21] "Han-NChina"        "Evenk_FarEast"     "Cocama"            "Guarani"          
+[25] "Guarani_GN"        "Karitiana"         "Surui"             "Azeri_Azerbajan"  
+[29] "Hungarian1"        "Hungarian2"       
+
+enclavesByMistake<-c("Yoruba"  ,"Nama", "Han-NChina" ) # these pops are not real enclaves, their linguistically unrelated pair is the one driving this genetic proximity effect
+ListEnclaves<-ListEnclaves[-which(ListEnclaves%in%(enclavesByMistake))]
+
+
 #*#******************************************
 #*
 #* potential FIGURE 1 different distribution FST closest same family and different family
@@ -451,6 +470,12 @@ secondaryMISMATCH_FSTzeroDiffFamily             ZeroSameFamilyNeighbors
 
 aa<-perpopRED[,c(1,39,41,16)] 
 meltperpop<-melt(aa)
+
+aa$difference<-aa$closeFstSameFamily-aa$closeFstDIFFFamily
+length(which(aa$difference>0))/(404-length(which(is.na(aa$difference))))
+[1] 0.1822917
+
+# 18 % of the pops who have another genetic population of the same language family do have closer FST with speakers of another language family
 
 colorchoice2<-colorchoice
 colorchoice2[10]<-"gray20"
@@ -472,6 +497,8 @@ ggsave("distributCloseFSTsameFamDiffFam.pdf", useDingbats=FALSE, height = 5, wid
 #* 
 
 
+
+
 ### 
 #*#******************************************
 #*  #*#******************************************
@@ -480,6 +507,8 @@ ggsave("distributCloseFSTsameFamDiffFam.pdf", useDingbats=FALSE, height = 5, wid
 #*    #*#******************************************
 #*    
 #*    
+
+
 
 
 ## exclude neighbors who speak the same language as DUPLICATE POPS
@@ -507,6 +536,12 @@ Pop1             Pop2                       popslistemp         Fst       family
 FstListREDinfo_noDuplicateNeighbors<-FstListREDinfo[-which(FstListREDinfo$GEOdist<10&FstListREDinfo$glottocodeBase1==FstListREDinfo$glottocodeBase2),]
 
 
+## exlude comparisons with the enclaves
+
+FstListREDinfo_noDuplicateNeighbors<-FstListREDinfo_noDuplicateNeighbors[-c
+                                              (which(FstListREDinfo_noDuplicateNeighbors$Pop2%in%ListEnclaves), 
+                                                which(FstListREDinfo_noDuplicateNeighbors$Pop1%in%ListEnclaves)),]
+
 #******************************************
 #*#******************************************
 #*#******************************************
@@ -525,8 +560,11 @@ FstListREDinfo_noDuplicateNeighbors<-FstListREDinfo[-which(FstListREDinfo$GEOdis
 # consider a geographic range equal to the one of the most distant from the same family
 # if it is too small, expand until 500 km
 
-perpopRED$WtestGEOfilterOLD<-perpopRED$WtestGEOfilter
-perpopRED$WtestPvalueGEOfilterOLD<-perpopRED$WtestPvalueGEOfilter
+
+## figure distribution and Wilcox test for each population
+
+
+
 perpopRED$WtestGEOfilter<-NA
 perpopRED$WtestPvalueGEOfilter<-NA
 
