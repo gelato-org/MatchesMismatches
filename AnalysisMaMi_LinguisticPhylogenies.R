@@ -62,9 +62,11 @@ bi_subset <- subset(g1, tips.include=listAUSreverse) # select only the tips i ha
 alberoLang<-as(bi_subset,"phylo")
 
 alberoLang<-makeNodeLabel(alberoLang, method = "number", prefix = "")
-write.tree(alberoLang,paste0(TARGETFamily ,"alberoLangPhylo4.phy"))
+#write.tree(alberoLang,paste0(TARGETFamily ,"alberoLangPhylo4.phy"))
 alberoLangPhylo4 <- as(alberoLang, "phylo4")
 alberoLang$tip.label<-taxaAUS$glottocode[match(alberoLang$tip.label,taxaAUS$taxon)] # names in glottocode
+write.tree(alberoLang,paste0(TARGETFamily ,"alberoLangPhylo4.phy"))
+
 distancealberoLang<-cophenetic.phylo(alberoLang) # names in glottocode
 distancealberoLang<-distancealberoLang/2 # remember the distances are double!!
 
@@ -113,9 +115,12 @@ bi_subset <- subset(g1, tips.include=listAUSreverse) # select only the tips i ha
 alberoLang<-as(bi_subset,"phylo")
 
 alberoLang<-makeNodeLabel(alberoLang, method = "number", prefix = "")
+
 alberoLangPhylo4 <- as(alberoLang, "phylo4")
 
 alberoLang$tip.label<-taxaAUS$glottocode[match(alberoLang$tip.label,taxaAUS$taxon)] # names in glottocode
+write.tree(alberoLang,paste0(TARGETFamily ,"CHANGalberoLangPhylo4.phy"))
+
 distancealberoLang<-cophenetic.phylo(alberoLang) # names in glottocode
 distancealberoLang<-distancealberoLang/2 # remember the distances are double!!
 #distancealberoLang<-distancealberoLang*1000 # remember the distances are double!! Austronesian case
@@ -165,11 +170,14 @@ bi_subset <- subset(g1, tips.include=listAUSreverse) # select only the tips i ha
 alberoLang<-as(bi_subset,"phylo")
 
 alberoLang<-makeNodeLabel(alberoLang, method = "number", prefix = "")
+
 alberoLang$edge.length<-alberoLang$edge.length*1000
-write.tree(alberoLang,paste0(TARGETFamily ,"alberoLangPhylo4.phy"))
+#write.tree(alberoLang,paste0(TARGETFamily ,"alberoLangPhylo4.phy"))
 
 alberoLangPhylo4 <- as(alberoLang, "phylo4")
 alberoLang$tip.label<-taxaAUS$glottocode[match(alberoLang$tip.label,taxaAUS$taxon)] # names in glottocode
+write.tree(alberoLang,paste0(TARGETFamily ,"alberoLangPhylo4.phy"))
+
 distancealberoLang<-cophenetic.phylo(alberoLang) # names in glottocode
 distancealberoLang<-distancealberoLang/2 # remember the distances are double!!
 #distancealberoLang<-distancealberoLang*1000 # multiply the distances to get years -  Austronesian case
@@ -225,11 +233,12 @@ bi_subset <- subset(g1, tips.include=listAUSreverse) # select only the tips i ha
 alberoLang<-as(bi_subset,"phylo")
 
 alberoLang<-makeNodeLabel(alberoLang, method = "number", prefix = "")
-write.tree(alberoLang,paste0(TARGETFamily ,"alberoLangPhylo4.phy"))
+#write.tree(alberoLang,paste0(TARGETFamily ,"alberoLangPhylo4.phy"))
 
 alberoLangPhylo4 <- as(alberoLang, "phylo4")
 
 alberoLang$tip.label<-taxaAUS$glottocode[match(alberoLang$tip.label,taxaAUS$taxon)] # names in glottocode
+write.tree(alberoLang,paste0(TARGETFamily ,"alberoLangPhylo4.phy"))
 
 distancealberoLang<-cophenetic.phylo(alberoLang) # names in glottocode
 distancealberoLang<-distancealberoLang/2 # remember the distances are double!!
@@ -276,9 +285,13 @@ bi_subset <- subset(g1, tips.include=listAUSreverse) # select only the tips i ha
 alberoLang<-as(bi_subset,"phylo")
 
 alberoLang<-makeNodeLabel(alberoLang, method = "number", prefix = "")
+#write.tree(alberoLang,paste0(TARGETFamily ,"SAVALYEValberoLangPhylo4.phy"))
+
 alberoLangPhylo4 <- as(alberoLang, "phylo4")
 
 alberoLang$tip.label<-taxaAUS$glottocode[match(alberoLang$tip.label,taxaAUS$taxon)] # names in glottocode
+write.tree(alberoLang,paste0(TARGETFamily ,"SAVALYEValberoLangPhylo4.phy"))
+
 distancealberoLang<-cophenetic.phylo(alberoLang) # names in glottocode
 distancealberoLang<-distancealberoLang/2 # remember the distances are double!!
 distancealberoLang<-distancealberoLang*1000 # adjust to make the years
