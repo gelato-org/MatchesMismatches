@@ -36,6 +36,405 @@ meltFstREDinfo<-FstListREDinfo
 # -----------------------------------------------------------------
 ### put all the dates from all the trees in the FST file
 
+
+##
+
+#****************************************
+#### SIMON FILE
+#****************************************
+
+library(tidyverse)
+
+
+# Balthasar script
+
+get_smallest_clade_age <- function(language1, language2, age_table) {
+  d <- filter(age_table, grepl(language1, nodesGlotto) & grepl(language2, nodesGlotto)) %>%
+    slice_min(order_by = clade_size)
+  return(data.frame(Language1 = language1,
+                    Language2 = language2,
+                    LinguisticDivergenceTime_median = d$median,
+                    LinguisticDivergenceTime_lower = d$hpdlower,
+                    LinguisticDivergenceTime_upper = d$hpdupper
+  ))
+}
+
+
+
+## AUSTRONESIAN
+
+TARGETFamily<-"Austronesian"
+
+listAUS<-unique(perpopRED$Gray2009)
+listAUS<-listAUS[-which(listAUS=="")]
+
+AUS<-read.nexus("withinFamilyTMRCA/Gray2009.tree")
+# from https://github.com/D-PLACE/dplace-data/blob/master/phylogenies/gray_et_al2009/summary.trees
+taxaAUS<-read.csv("withinFamilyTMRCA/taxaGray2009.csv")
+# from https://github.com/D-PLACE/dplace-data/blob/master/phylogenies/gray_et_al2009/taxa.csv
+
+#*******
+
+listAUSreverse<-as.character(taxaAUS$taxon[match(listAUS,taxaAUS$glottocode)])
+
+
+ie_AUSTR.df <- read.csv("AustronesianalberoLangPhylo4.csv") %>%
+  # get the clade size by counting the languages in the node names:
+  ie_AUSTR.df <-  mutate(ie_AUSTR.df, clade_size = str_count(node, fixed(",")))
+
+strsplit(ie_AUSTR.df$node[1],",")
+
+listsplit<-strsplit(as.character(ie_AUSTR.df$node),",")
+
+#returnglotto<-function(x){(match(x,taxaAUS$taxon))}
+returnglotto<-function(x){taxaAUS$glottocode[match(x,taxaAUS$taxon)]}
+# names in glottocode
+
+
+ie_AUSTR.df$nodesGlotto<-lapply(listsplit, returnglotto)
+ie_AUSTR.df$nodesGlotto<-lapply(ie_AUSTR.df$nodesGlotto, as.character)
+
+
+
+#ie_AUSTR.df<-ie_AUSTR.df%>%  mutate(ie_AUSTR.df, clade_size = str_count(node, fixed(",")))
+
+
+get_smallest_clade_age("Rennellese", "Ogan",ie_AUSTR.df )
+
+listaglot<-unique(levels(ie_AUSTR.df$node[[1]]))
+
+
+
+
+meltFstREDinfoSINGLE$Gray2009_DivTime<-as.numeric(meltFstREDinfoSINGLE$Gray2009_DivTime)
+meltFstREDGray2009<-meltFstREDinfoSINGLE[!is.na(meltFstREDinfoSINGLE$Gray2009_DivTime),]
+meltFstREDGray2009<-meltFstREDGray2009[!is.na(meltFstREDGray2009$TMRCA_doubleNe),] # take only the comparisons where i have a linguistic div time and a genetic div time
+
+
+addendumLang<-c()
+for (i in 1:nrow(meltFstREDGray2009)){
+  pop1<-meltFstREDGray2009$Pop1[i]
+  pop2<-meltFstREDGray2009$Pop2[i]
+  glottmatch1<-perpopRED$Gray2009[match(pop1,perpopRED$PopName)]
+  glottmatch2<-perpopRED$Gray2009[match(pop2,perpopRED$PopName)]
+  addendumLang1<-  get_smallest_clade_age(glottmatch1, glottmatch2,ie_AUSTR.df )
+  addendumLang<-rbind(addendumLang,addendumLang1)
+}
+
+for (i in 1:nrow(meltFstREDGray2009)){
+  pop1<-meltFstREDGray2009$Pop1[i]
+  pop2<-meltFstREDGray2009$Pop2[i]
+  glottmatch1<-perpopRED$Gray2009[match(pop1,perpopRED$PopName)]
+  glottmatch2<-perpopRED$Gray2009[match(pop2,perpopRED$PopName)]
+  temptime<- addendumLang[intersect( grep(glottmatch1, addendumLang$Language1) , grep(glottmatch2, addendumLang$Language2)),]
+  meltFstREDGray2009$LinguisticDivergenceTime_median[i]<-mean(temptime$LinguisticDivergenceTime_median)*1000
+  meltFstREDGray2009$LinguisticDivergenceTime_lower[i]<-mean(temptime$LinguisticDivergenceTime_lower)*1000
+  meltFstREDGray2009$LinguisticDivergenceTime_upper[i]<-mean(temptime$LinguisticDivergenceTime_upper)*1000
+}
+
+
+## now plot
+outliers<-c( "Mamanwa", "Rennell_and_Bellona", "Mamanwa1")
+meltFstREDGray2009<-meltFstREDGray2009[-which(meltFstREDGray2009$Pop1%in%outliers),]
+meltFstREDGray2009<-meltFstREDGray2009[-which(meltFstREDGray2009$Pop2%in%outliers),]
+
+#adjust for CI which expand out of the limit of the y axis
+maxTMRCA<-20000
+meltFstREDGray2009$TMRCA_doubleNe_95[which(meltFstREDGray2009$TMRCA_doubleNe_95>maxTMRCA)]<-maxTMRCA
+
+colorino<-MainFamilies2$COLOR[which(MainFamilies2$MainFamilies==meltFstREDGray2009$FAMILY[1])]
+
+gg<-ggplot(meltFstREDGray2009,aes(LinguisticDivergenceTime_median,TMRCA_doubleNe))
+AUSTR<-gg+
+  ylim(0,20000)+
+  xlim(0,6000)+
+  geom_errorbar(aes(ymin=TMRCA_doubleNe_5, ymax=TMRCA_doubleNe_95,),size=3,width=3,
+                alpha=0.1)+
+  geom_errorbarh(aes(xmin=LinguisticDivergenceTime_lower, xmax=LinguisticDivergenceTime_upper),size=3,height=3,
+                 alpha=0.1)+
+  
+  geom_point(size=3,alpha=0.7, fill=colorino, shape=21, color="black")+
+  # geom_text(aes(label=popslistemp), size=1)+
+  xlab("Time distance from language tree - years ago")+
+  ylab("Time distance from genetic data - years ago")+
+  geom_abline(slope=1, intercept = 0, alpha=0.5)+theme_light()+
+  ggtitle(meltFstREDGray2009$FAMILY[1])+theme(plot.title = element_text(color = colorino))
+
+# ggsave("correlationTimeGray2009_Austronesian_noOutlierMamanwa_RennellBelloneMINI_doubleBAR.pdf", useDingbats=FALSE, height = 5, width = 5)
+
+# *****************************
+# with log scale
+# and x axis = y axis
+
+require(scales) # to access break formatting functions
+
+gg<-ggplot(meltFstREDGray2009,aes(LinguisticDivergenceTime_median,TMRCA_doubleNe))
+AUSTR<-gg+
+  ylim(0,32000)+
+  xlim(0,32000)+
+  geom_errorbar(aes(ymin=TMRCA_doubleNe_5, ymax=TMRCA_doubleNe_95,),size=3,width=3,
+                alpha=0.1)+
+  geom_errorbarh(aes(xmin=LinguisticDivergenceTime_lower, xmax=LinguisticDivergenceTime_upper),size=3,height=3,
+                 alpha=0.1)+
+  
+  geom_point(size=3,alpha=0.7, fill=colorino, shape=21, color="black")+
+  # geom_text(aes(label=popslistemp), size=1)+
+  xlab("Time distance from language tree - years ago")+
+  ylab("Time distance from genetic data - years ago")+
+  geom_abline(slope=1, intercept = 0, alpha=0.5)+theme_light()+
+  # scale_x_log10(breaks = trans_breaks("log10", function(x) 10^x),
+  #               labels = trans_format("log10", math_format(10^.x))) +
+  # scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
+  #               labels = trans_format("log10", math_format(10^.x))) +  
+  ggtitle(meltFstREDGray2009$FAMILY[1])+theme(plot.title = element_text(color = colorino))
+
+
+#****************************************
+# INDO EUROPEAN
+#****************************************
+
+TARGETFamily<-"Indo-European"
+
+listAUS<-unique(perpopRED$Bouckaert2012)
+listAUS<-listAUS[-which(listAUS=="")]
+
+taxaAUS<-read.table("withinFamilyTMRCA/Bouckaert2012_taxa.csv", sep=";", header=T, quote = "")
+
+ie_IE.df <- read.csv("Indo-EuropeanalberoLangPhylo4BOUCKAERT.csv") 
+# get the clade size by counting the languages in the node names:
+ie_IE.df <-ie_IE.df %>% mutate(ie_IE.df, clade_size = str_count(node, fixed(",")))
+
+listsplit<-strsplit(as.character(ie_IE.df$node),",")
+
+#returnglotto<-function(x){(match(x,taxaAUS$taxon))}
+returnglotto<-function(x){taxaAUS$glottocode[match(x,taxaAUS$taxon)]}
+# names in glottocode
+
+
+ie_IE.df$nodesGlotto<-lapply(listsplit, returnglotto)
+ie_IE.df$nodesGlotto<-lapply(ie_IE.df$nodesGlotto, as.character)
+
+
+listaglot<-unique(levels(ie_IE.df$node[[1]]))
+
+
+meltFstREDinfoSINGLE$bouckaert2012_DivTime<-as.numeric(meltFstREDinfoSINGLE$bouckaert2012_DivTime)
+meltFstREDBouckaert<-meltFstREDinfoSINGLE[!is.na(meltFstREDinfoSINGLE$bouckaert2012_DivTime),]
+meltFstREDBouckaert<-meltFstREDBouckaert[!is.na(meltFstREDBouckaert$TMRCA_doubleNe),] # take only the comparisons where i have a linguistic div time and a genetic div time
+
+
+addendumLang<-c()
+for (i in 1:nrow(meltFstREDBouckaert)){
+  pop1<-meltFstREDBouckaert$Pop1[i]
+  pop2<-meltFstREDBouckaert$Pop2[i]
+  glottmatch1<-perpopRED$Bouckaert2012 [match(pop1,perpopRED$PopName)]
+  glottmatch2<-perpopRED$Bouckaert2012[match(pop2,perpopRED$PopName)]
+  addendumLang1<-  get_smallest_clade_age(glottmatch1, glottmatch2,ie_IE.df )
+  addendumLang<-rbind(addendumLang,addendumLang1)
+}
+
+for (i in 1:nrow(meltFstREDBouckaert)){
+  pop1<-meltFstREDBouckaert$Pop1[i]
+  pop2<-meltFstREDBouckaert$Pop2[i]
+  glottmatch1<-perpopRED$Bouckaert2012[match(pop1,perpopRED$PopName)]
+  glottmatch2<-perpopRED$Bouckaert2012[match(pop2,perpopRED$PopName)]
+  temptime<- addendumLang[intersect( grep(glottmatch1, addendumLang$Language1) , grep(glottmatch2, addendumLang$Language2)),]
+  meltFstREDBouckaert$LinguisticDivergenceTime_median[i]<-mean(temptime$LinguisticDivergenceTime_median)
+  meltFstREDBouckaert$LinguisticDivergenceTime_lower[i]<-mean(temptime$LinguisticDivergenceTime_lower)
+  meltFstREDBouckaert$LinguisticDivergenceTime_upper[i]<-mean(temptime$LinguisticDivergenceTime_upper)
+}
+
+
+
+## now plot
+
+outliers<-c( "Sardinian") # Sardinians are too genetically divergent
+meltFstREDBouckaert<-meltFstREDBouckaert[-which(meltFstREDBouckaert$Pop1%in%outliers),]
+meltFstREDBouckaert<-meltFstREDBouckaert[-which(meltFstREDBouckaert$Pop2%in%outliers),]
+
+maxTMRCA<-11500 # for the plot area
+meltFstREDBouckaert$TMRCA_doubleNe_95[which(meltFstREDBouckaert$TMRCA_doubleNe_95>maxTMRCA)]<-maxTMRCA
+
+colorino<-MainFamilies2$COLOR[which(MainFamilies2$MainFamilies==meltFstREDBouckaert$FAMILY[1])]
+
+gg<-ggplot(meltFstREDBouckaert,aes(LinguisticDivergenceTime_median,TMRCA_doubleNe))
+BOUCKAERT<-gg+
+  xlim(0,7500)+
+  ylim(0,maxTMRCA)+
+  geom_errorbar(aes(ymin=TMRCA_doubleNe_5, ymax=TMRCA_doubleNe_95,),size=3,width=3,
+                alpha=0.1)+
+  geom_errorbarh(aes(xmin=LinguisticDivergenceTime_lower, xmax=LinguisticDivergenceTime_upper),size=3,height=3,
+                 alpha=0.1)+
+  
+  geom_point(size=3,alpha=0.7, fill=colorino, shape=21, color="black")+
+  # geom_text(aes(label=popslistemp), size=1)+
+  xlab("Time distance from language tree - years ago")+
+  ylab("Time distance from genetic data - years ago")+
+  geom_abline(slope=1, intercept = 0, alpha=0.5)+theme_light()+
+  ggtitle(TARGETFamily)+theme(plot.title = element_text(color = colorino))
+
+# ggsave("correlationTimeBouckaertIE_noSardiniaMINI_doubleBAR.pdf", useDingbats=FALSE, height = 5, width = 5)
+
+# *****************************
+# with log scale
+# and x axis = y axis
+
+require(scales) # to access break formatting functions
+
+
+gg<-ggplot(meltFstREDBouckaert,aes(LinguisticDivergenceTime_median,TMRCA_doubleNe))
+BOUCKAERT<-gg+
+  xlim(0,25000)+
+  ylim(0,25000)+
+  geom_errorbar(aes(ymin=TMRCA_doubleNe_5, ymax=TMRCA_doubleNe_95,),size=3,width=3,
+                alpha=0.1)+
+  geom_errorbarh(aes(xmin=LinguisticDivergenceTime_lower, xmax=LinguisticDivergenceTime_upper),size=3,height=3,
+                 alpha=0.1)+
+  
+  geom_point(size=3,alpha=0.7, fill=colorino, shape=21, color="black")+
+  # geom_text(aes(label=popslistemp), size=1)+
+  xlab("Time distance from language tree - years ago")+
+  ylab("Time distance from genetic data - years ago")+
+  geom_abline(slope=1, intercept = 0, alpha=0.5)+theme_light()+
+  ggtitle(TARGETFamily)+theme(plot.title = element_text(color = colorino))
+
+# ggsave("correlationTimeBouckaertIE_noSardiniaMINI_doubleBAR.pdf", useDingbats=FALSE, height = 5, width = 5)
+
+
+
+#******************************************
+# Turkic
+#******************************************
+#*
+#* Hrushka 2015
+#*  
+
+TARGETFamily<-"Turkic"
+
+listAUS<-unique(perpopRED$Hruschka2015)
+listAUS<-listAUS[-1]
+AUS<-read.nexus("withinFamilyTMRCA/Hrushka_summary2.trees")
+#from https://github.com/D-PLACE/dplace-data/blob/master/phylogenies/hruschka_et_al2015/summary.trees
+taxaAUS<-read.csv("withinFamilyTMRCA/Hrushka_taxa2.csv", header=T, quote = "")
+# from https://github.com/D-PLACE/dplace-data/blob/master/phylogenies/hruschka_et_al2015/taxa.csv
+colnames(taxaAUS)[1]<-"code"
+colnames(taxaAUS)[2]<-"taxon"
+
+
+
+ie_TURK.df <- read.csv("TurkicalberoLangPhylo4.csv") 
+# get the clade size by counting the languages in the node names:
+ie_TURK.df <-ie_TURK.df %>% mutate(ie_TURK.df, clade_size = str_count(node, fixed(",")))
+
+listsplit<-strsplit(as.character(ie_TURK.df$node),",")
+
+returnglotto<-function(x){taxaAUS$glottocode[match(x,taxaAUS$code)]}
+# names in glottocode
+
+
+ie_TURK.df$nodesGlotto<-lapply(listsplit, returnglotto)
+ie_TURK.df$nodesGlotto<-lapply(ie_TURK.df$nodesGlotto, as.character)
+
+
+listaglot<-unique(levels(ie_TURK.df$node[[1]]))
+
+
+
+meltFstREDinfoSINGLE$Hruschka2015_DivTime<-as.numeric(meltFstREDinfoSINGLE$Hruschka2015_DivTime)
+
+meltFstREDHrushka<-meltFstREDinfoSINGLE[!is.na(meltFstREDinfoSINGLE$Hruschka2015_DivTime),]
+meltFstREDHrushka<-meltFstREDHrushka[!is.na(meltFstREDHrushka$TMRCA_doubleNe),]
+
+
+addendumLang<-c()
+for (i in 1:nrow(meltFstREDHrushka)){
+  pop1<-meltFstREDHrushka$Pop1[i]
+  pop2<-meltFstREDHrushka$Pop2[i]
+  glottmatch1<-perpopRED$Hruschka2015 [match(pop1,perpopRED$PopName)]
+  glottmatch2<-perpopRED$Hruschka2015[match(pop2,perpopRED$PopName)]
+  addendumLang1<-  get_smallest_clade_age(glottmatch1, glottmatch2,ie_TURK.df )
+  addendumLang<-rbind(addendumLang,addendumLang1)
+}
+
+for (i in 1:nrow(meltFstREDHrushka)){
+  pop1<-meltFstREDHrushka$Pop1[i]
+  pop2<-meltFstREDHrushka$Pop2[i]
+  glottmatch1<-perpopRED$Hruschka2015 [match(pop1,perpopRED$PopName)]
+  glottmatch2<-perpopRED$Hruschka2015[match(pop2,perpopRED$PopName)]
+  temptime<- addendumLang[intersect( grep(glottmatch1, addendumLang$Language1) , grep(glottmatch2, addendumLang$Language2)),]
+  meltFstREDHrushka$LinguisticDivergenceTime_median[i]<-mean(temptime$LinguisticDivergenceTime_median)
+  meltFstREDHrushka$LinguisticDivergenceTime_lower[i]<-mean(temptime$LinguisticDivergenceTime_lower)
+  meltFstREDHrushka$LinguisticDivergenceTime_upper[i]<-mean(temptime$LinguisticDivergenceTime_upper)
+}
+
+
+
+#adjust for CI which expand out of the limit of the y axis
+maxTMRCA<-22000
+meltFstREDHrushka$TMRCA_doubleNe_95[which(meltFstREDHrushka$TMRCA_doubleNe_95>maxTMRCA)]<-maxTMRCA
+#  perpopREDIE<-perpopRED[which(perpopRED$Bouckaert2012!=""),]
+colorino<-MainFamilies2$COLOR[which(MainFamilies2$MainFamilies==meltFstREDHrushka$FAMILY[1])]
+
+gg<-ggplot(meltFstREDHrushka,aes(LinguisticDivergenceTime_median,TMRCA_doubleNe))
+
+HRUS<-gg+
+  xlim(0,3000)+
+  
+  geom_errorbar(aes(ymin=TMRCA_doubleNe_5, ymax=TMRCA_doubleNe_95,),size=3,width=3,
+                alpha=0.1)+
+  geom_errorbarh(aes(xmin=LinguisticDivergenceTime_lower, xmax=LinguisticDivergenceTime_upper),size=3,height=3,
+                 alpha=0.1)+
+  
+  geom_point(size=3,alpha=0.7, fill=colorino, shape=21, color="black")+
+  # geom_text(aes(label=popslistemp), size=1)+
+  xlab("Time distance from language tree - years ago")+
+  ylab("Time distance from genetic data - years ago")+
+  geom_abline(slope=1, intercept = 0, alpha=0.5)+theme_light()+
+  ggtitle(TARGETFamily)+theme(plot.title = element_text(color = colorino))
+
+# ggsave("correlationTimeturkicMINI_doubleBAR.pdf", useDingbats=FALSE, height = 5, width = 5)
+
+# *****************************
+# with log scale
+# and x axis = y axis
+
+require(scales) # to access break formatting functions
+colorino<-MainFamilies2$COLOR[which(MainFamilies2$MainFamilies==meltFstREDHrushka$FAMILY[1])]
+
+gg<-ggplot(meltFstREDHrushka,aes(LinguisticDivergenceTime_median,TMRCA_doubleNe))
+
+HRUS<-gg+
+  xlim(0,40000)+
+  ylim(0,40000)+
+  geom_errorbar(aes(ymin=TMRCA_doubleNe_5, ymax=TMRCA_doubleNe_95,),size=3,width=3,
+                alpha=0.1)+
+  geom_errorbarh(aes(xmin=LinguisticDivergenceTime_lower, xmax=LinguisticDivergenceTime_upper),size=3,height=3,
+                 alpha=0.1)+
+  
+  geom_point(size=3,alpha=0.7, fill=colorino, shape=21, color="black")+
+  # geom_text(aes(label=popslistemp), size=1)+
+  xlab("Time distance from language tree - years ago")+
+  ylab("Time distance from genetic data - years ago")+
+  geom_abline(slope=1, intercept = 0, alpha=0.5)+theme_light()+
+  ggtitle(TARGETFamily)+theme(plot.title = element_text(color = colorino))
+
+library(patchwork)
+BOUCKAERT+AUSTR+HRUS
+ggsave("combined3LangFamiliesCorrelation_Fig4_2021_errorBAR.pdf", useDingbats=FALSE, height = 4, width = 12)
+
+ggsave("combined3LangFamiliesCorrelation_Fig4_2021_errorBAR_fixedaxisEqual.pdf", useDingbats=FALSE, height = 4, width = 12)
+
+# *******************************************************
+# *******************************************************
+# *******************************************************
+# *******************************************************
+# *******************************************************
+# *******************************************************
+
+# *******************************************************
+
+
+# further analysis
 #******************************************************************************
 # INDO EUROPEAN
 #******************************************************************************
@@ -449,7 +848,7 @@ SAVAL<-gg+
 
 meltFstREDinfoSINGLE$Gray2009_DivTime<-as.numeric(meltFstREDinfoSINGLE$Gray2009_DivTime)
 meltFstREDGray2009<-meltFstREDinfoSINGLE[!is.na(meltFstREDinfoSINGLE$Gray2009_DivTime),]
-meltFstREDBouckaert<-meltFstREDBouckaert[!is.na(meltFstREDBouckaert$TMRCA_doubleNe),] # take only the comparisons where i have a linguistic div time and a genetic div time
+meltFstREDGray2009<-meltFstREDGray2009[!is.na(meltFstREDGray2009$TMRCA_doubleNe),] # take only the comparisons where i have a linguistic div time and a genetic div time
 
 outliers<-c( "Mamanwa", "Rennell_and_Bellona", "Mamanwa1")
 meltFstREDGray2009<-meltFstREDGray2009[-which(meltFstREDGray2009$Pop1%in%outliers),]
