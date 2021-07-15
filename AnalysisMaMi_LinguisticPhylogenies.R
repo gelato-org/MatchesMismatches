@@ -167,11 +167,12 @@ AUSTR<-gg+
 # and x axis = y axis
 
 require(scales) # to access break formatting functions
+colorino<-MainFamilies2$COLOR[which(MainFamilies2$MainFamilies==meltFstREDGray2009$FAMILY[1])]
 
 gg<-ggplot(meltFstREDGray2009,aes(LinguisticDivergenceTime_median,TMRCA_doubleNe))
 AUSTR<-gg+
-  ylim(0,32000)+
-  xlim(0,32000)+
+  # ylim(0,32000)+
+  # xlim(0,32000)+
   geom_errorbar(aes(ymin=TMRCA_doubleNe_5, ymax=TMRCA_doubleNe_95,),size=3,width=3,
                 alpha=0.1)+
   geom_errorbarh(aes(xmin=LinguisticDivergenceTime_lower, xmax=LinguisticDivergenceTime_upper),size=3,height=3,
@@ -182,10 +183,8 @@ AUSTR<-gg+
   xlab("Time distance from language tree - years ago")+
   ylab("Time distance from genetic data - years ago")+
   geom_abline(slope=1, intercept = 0, alpha=0.5)+theme_light()+
-  # scale_x_log10(breaks = trans_breaks("log10", function(x) 10^x),
-  #               labels = trans_format("log10", math_format(10^.x))) +
-  # scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
-  #               labels = trans_format("log10", math_format(10^.x))) +  
+  scale_y_sqrt(limits=c(0,32000))+
+  scale_x_sqrt(limits=c(0,32000))+
   ggtitle(meltFstREDGray2009$FAMILY[1])+theme(plot.title = element_text(color = colorino))
 
 
@@ -281,11 +280,12 @@ BOUCKAERT<-gg+
 
 require(scales) # to access break formatting functions
 
+colorino<-MainFamilies2$COLOR[which(MainFamilies2$MainFamilies==meltFstREDBouckaert$FAMILY[1])]
 
 gg<-ggplot(meltFstREDBouckaert,aes(LinguisticDivergenceTime_median,TMRCA_doubleNe))
 BOUCKAERT<-gg+
-  xlim(0,25000)+
-  ylim(0,25000)+
+  # xlim(0,25000)+
+  # ylim(0,25000)+
   geom_errorbar(aes(ymin=TMRCA_doubleNe_5, ymax=TMRCA_doubleNe_95,),size=3,width=3,
                 alpha=0.1)+
   geom_errorbarh(aes(xmin=LinguisticDivergenceTime_lower, xmax=LinguisticDivergenceTime_upper),size=3,height=3,
@@ -296,6 +296,8 @@ BOUCKAERT<-gg+
   xlab("Time distance from language tree - years ago")+
   ylab("Time distance from genetic data - years ago")+
   geom_abline(slope=1, intercept = 0, alpha=0.5)+theme_light()+
+  scale_y_sqrt(limits=c(0,25000))+
+  scale_x_sqrt(limits=c(0,25000))+
   ggtitle(TARGETFamily)+theme(plot.title = element_text(color = colorino))
 
 # ggsave("correlationTimeBouckaertIE_noSardiniaMINI_doubleBAR.pdf", useDingbats=FALSE, height = 5, width = 5)
@@ -404,8 +406,8 @@ colorino<-MainFamilies2$COLOR[which(MainFamilies2$MainFamilies==meltFstREDHrushk
 gg<-ggplot(meltFstREDHrushka,aes(LinguisticDivergenceTime_median,TMRCA_doubleNe))
 
 HRUS<-gg+
-  xlim(0,40000)+
-  ylim(0,40000)+
+  # xlim(0,40000)+
+  # ylim(0,40000)+
   geom_errorbar(aes(ymin=TMRCA_doubleNe_5, ymax=TMRCA_doubleNe_95,),size=3,width=3,
                 alpha=0.1)+
   geom_errorbarh(aes(xmin=LinguisticDivergenceTime_lower, xmax=LinguisticDivergenceTime_upper),size=3,height=3,
@@ -416,13 +418,15 @@ HRUS<-gg+
   xlab("Time distance from language tree - years ago")+
   ylab("Time distance from genetic data - years ago")+
   geom_abline(slope=1, intercept = 0, alpha=0.5)+theme_light()+
+  scale_y_sqrt(limits=c(0,40000))+
+  scale_x_sqrt(limits=c(0,40000))+
   ggtitle(TARGETFamily)+theme(plot.title = element_text(color = colorino))
 
 library(patchwork)
 BOUCKAERT+AUSTR+HRUS
 ggsave("combined3LangFamiliesCorrelation_Fig4_2021_errorBAR.pdf", useDingbats=FALSE, height = 4, width = 12)
 
-ggsave("combined3LangFamiliesCorrelation_Fig4_2021_errorBAR_fixedaxisEqual.pdf", useDingbats=FALSE, height = 4, width = 12)
+ggsave("combined3LangFamiliesCorrelation_Fig4_2021_errorBAR_fixedaxisEqual_logScale.pdf", useDingbats=FALSE, height = 4, width = 12)
 
 # *******************************************************
 # *******************************************************
