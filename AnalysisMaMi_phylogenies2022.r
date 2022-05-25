@@ -19,7 +19,7 @@
 perpopRED<-read.table("PerpopRED_MaMi2022.txt", header = T, sep = "\t", as.is=T)
 
 # list of pairwise comparisons :
-FstListinfo<-read.table("FstListREDinfo_MaMi2022.txt", header=T, sep="\t")
+FstListinfo<-read.csv("DatasetS2_pairwise_FstListREDinfo_MaMi2022.csv", header=T, sep=",")
 
 
 # color palette for major language families
@@ -257,29 +257,23 @@ for (k in 1:3){
   
   for (j in 1:Nnode(alberoLang)){
     settemp<- labels(descendants(alberoLangPhylo4,which(attributes(alberoLangPhylo4)$label==j),type = "all"))
-    # addlabels<-labels(descendants(alberoLangPhylo4,which(attributes(alberoLangPhylo4)$label==j),type = "all"))
-    # timetemp<-(distancealberoLang[which(colnames(distancealberoLang)%in%settemp),which(rownames(distancealberoLang)%in%settemp)])
-    
+     
     timetemp<-melt(distancealberoLang[which(colnames(distancealberoLang)%in%settemp),which(rownames(distancealberoLang)%in%settemp)])
     timetemp$value<-round(timetemp$value)
     nodevalues[j,2]<-(max(timetemp$value))
     rowsmaxdivergence<-which(timetemp$value==max(timetemp$value))
     maxdivergence<-timetemp[rowsmaxdivergence,] # i cannot use only the maximum divergence time otherwise i do not have useful matches with genetic data, so i pick up the maximum from genetic divergence of all the derived nodes
     
-    # maxcouplestimenode<-c(as.character(maxdivergence$X1),as.character(maxdivergence$X2))
     gentimetemp<-melt(distanceTMRCAred[which(colnames(distanceTMRCAred)%in%settemp),which(rownames(distanceTMRCAred)%in%settemp)])[rowsmaxdivergence,]
     gentimetempProportion<- melt( distancePROPORTIONred[which(colnames(distancePROPORTIONred)%in%settemp),which(rownames(distancePROPORTIONred)%in%settemp)])[rowsmaxdivergence,]
     nodevalues[j,3]<-my.max(gentimetemp$value)
     nodevalues[j,4]<-mean(gentimetemp$value, na.rm = T)
-    # nodevalues[j,5]<-mean(melt(gentimetempProportion$value)[which(timetemp$value==max(timetemp$value)),]$value, na.rm = T)
     nodevalues[j,6]<-mean(gentimetempProportion$value, na.rm = T)
   }
   
   nodevalues<-as.data.frame(nodevalues)
   nodevalues$mainFamily<-TARGETFamily
-  #nodevalues11<-rbind(nodevalues11,nodevalues)
-  # from here
-  #nodevalues<-nodevalues11[which(nodevalues11$mainFamily==TARGETFamily),]
+ 
   listAUSreverseInGenTMRCA<-taxaAUS$taxon[match(glottredlist,taxaAUS$glottocode)]
   
   alberoLangNamesLang<-alberoLang
@@ -288,8 +282,6 @@ for (k in 1:3){
   alberoLangNamesLang$tip.label[which(alberoLangNamesLang$tip.label%in%listAUSreverseInGenTMRCA)]<-paste0(alberoLangNamesLang$tip.label[which(alberoLangNamesLang$tip.label%in%listAUSreverseInGenTMRCA)], "_GEN_TIME") # mark the names of languages for which i do have the genetic divergence time
   
   proportionGenLang <- nodevalues$meanproportionDivergenceTime
-  # proportionGenLang[!is.na(nodevalues$MaxCoupleproportionDivergenceTime)] <- nodevalues$MaxCoupleproportionDivergenceTime[!is.na(nodevalues$MaxCoupleproportionDivergenceTime)] #
-  # replace with max divergence time when available 
   
   cexplay=1.5
   
